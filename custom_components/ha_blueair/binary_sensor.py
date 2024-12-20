@@ -7,6 +7,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.helpers.entity import EntityDescription
 
 from .entity import BlueairEntity, async_setup_entry_helper
+from .blueair_update_coordinator_device_aws import BlueairUpdateCoordinatorDeviceAws
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -26,6 +27,12 @@ class BlueairChildLockSensor(BlueairEntity, BinarySensorEntity):
 
     @classmethod
     def is_implemented(kls, coordinator):
+        # Aws devices already has child lock as a switch; if we do not expose
+        # this sensor we do not have to find a way to use local cache or work
+        # around the polling latency. c.f.:
+        # https://github.com/dahlb/ha_blueair/issues/158#issuecomment-2550586396
+        if isinstance(coordinator, BlueairUpdateCoordinatorDeviceAws):
+           return False
         return coordinator.child_lock is not NotImplemented
 
     def __init__(self, coordinator):
